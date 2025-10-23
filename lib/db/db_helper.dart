@@ -47,6 +47,12 @@ dataNascimento TEXT NOT NULL,
 cidadeNascimento TEXT NOT NULL
 )
 ''');
+await db.execute('''
+  CREATE TABLE cidades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nomeCidade TEXT NOT NULL
+  )
+''');
   }
 
   // Fecha o banco (quando necessário)

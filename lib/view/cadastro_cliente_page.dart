@@ -97,8 +97,24 @@ class _CadastroClientePageState extends State<CadastroClientePage> {
                       ElevatedButton.icon(
                         onPressed: () async {
                           Navigator.pop(context); // Fecha o diálogo atual
+
                           // Abre a tela de cadastro de cidade
                           await Navigator.pushNamed(context, '/cadastroCidade');
+
+                          // ✅ Recarrega as cidades ao voltar
+                          await cidadeViewModel.carregarCidades();
+
+                          // Mostra um feedback rápido
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text('Cidade cadastrada com sucesso!')),
+                            );
+                          }
+
+                          // ✅ Reabre o diálogo atualizado
+                          await _abrirPopupBuscaCidade(context);
                         },
                         icon: const Icon(Icons.add_location_alt),
                         label: const Text('Cadastrar nova cidade'),
@@ -157,7 +173,6 @@ class _CadastroClientePageState extends State<CadastroClientePage> {
     }
   }
 
-
   void _salvar() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -195,9 +210,8 @@ class _CadastroClientePageState extends State<CadastroClientePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.clienteDTO == null
-            ? 'Novo Cliente'
-            : 'Editar Cliente'),
+        title:
+            Text(widget.clienteDTO == null ? 'Novo Cliente' : 'Editar Cliente'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

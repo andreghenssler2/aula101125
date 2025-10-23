@@ -34,9 +34,9 @@ class CidadeViewModel extends ChangeNotifier {
 
   /// 🔍 Filtrar cidades localmente (sem acessar o banco)
   List<Cidade> filtrar(String filtro) {
-  return _todasCidades
-      .where((c) => c.nomeCidade.toLowerCase().contains(filtro.toLowerCase()))
-      .toList();
+    return _todasCidades
+        .where((c) => c.nomeCidade.toLowerCase().contains(filtro.toLowerCase()))
+        .toList();
   }
 
   /// Adiciona uma nova cidade
@@ -46,8 +46,8 @@ class CidadeViewModel extends ChangeNotifier {
       await carregarCidades(); // atualiza a lista
     } catch (e) {
       _errorMessage = 'Erro ao adicionar cidade: $e';
-      notifyListeners();
     }
+    notifyListeners();
   }
 
   /// Atualiza uma cidade existente
@@ -57,8 +57,8 @@ class CidadeViewModel extends ChangeNotifier {
       await carregarCidades();
     } catch (e) {
       _errorMessage = 'Erro ao atualizar cidade: $e';
-      notifyListeners();
     }
+    notifyListeners();
   }
 
   /// Exclui uma cidade pelo ID
@@ -68,7 +68,7 @@ class CidadeViewModel extends ChangeNotifier {
       await carregarCidades();
     } catch (e) {
       _errorMessage = 'Erro ao excluir cidade: $e';
-      notifyListeners();
     }
+    notifyListeners();
   }
 }
