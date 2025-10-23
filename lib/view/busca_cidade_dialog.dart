@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../model/cidade.dart';
 import '../viewmodel/cidade_viewmodel.dart';
+import '../model/cidade.dart';
 
 class BuscaCidadeDialog extends StatefulWidget {
   const BuscaCidadeDialog({super.key});
@@ -20,36 +20,41 @@ class _BuscaCidadeDialogState extends State<BuscaCidadeDialog> {
 
     return AlertDialog(
       title: const Text('Buscar Cidade'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            decoration: const InputDecoration(
-              labelText: 'Digite o nome da cidade',
-              prefixIcon: Icon(Icons.search),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: Column(
+          children: [
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Digite o nome da cidade',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) => setState(() => filtro = value),
             ),
-            onChanged: (value) => setState(() => filtro = value),
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: cidadesFiltradas.length,
-              itemBuilder: (context, index) {
-                final cidade = cidadesFiltradas[index];
-                return ListTile(
-                  title: Text(cidade.nomeCidade),
-                  onTap: () => Navigator.pop(context, cidade),
-                );
-              },
+            const SizedBox(height: 10),
+            Expanded(
+              child: ListView.builder(
+                itemCount: cidadesFiltradas.length,
+                itemBuilder: (context, index) {
+                  final cidade = cidadesFiltradas[index];
+                  return ListTile(
+                    title: Text(cidade.nomeCidade),
+                    trailing: TextButton(
+                      child: const Text('Selecionar'),
+                      onPressed: () => Navigator.pop(context, cidade),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
         TextButton(
-          child: const Text('Fechar'),
           onPressed: () => Navigator.pop(context),
+          child: const Text('Fechar'),
         ),
       ],
     );

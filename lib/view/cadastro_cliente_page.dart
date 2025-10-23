@@ -1,49 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/cliente_viewmodel.dart';
+import '../viewmodel/cidade_viewmodel.dart';
+import '../model/cidade.dart';
 
-// Tela de cadastro/edição (View)
-// NÃO importa Model - usa apenas DTO do ViewModel
 class CadastroClientePage extends StatefulWidget {
-  // Recebe um DTO opcional: se for null => criação; senão => edição
-  final ClienteDTO? clienteDTO;
-  const CadastroClientePage({super.key, this.clienteDTO});
+  const CadastroClientePage({super.key});
 
   @override
   State<CadastroClientePage> createState() => _CadastroClientePageState();
 }
 
 class _CadastroClientePageState extends State<CadastroClientePage> {
-  // Form key para validação
-  final _formKey = GlobalKey<FormState>();
+  final _cpfController = TextEditingController();
+  final _nomeController = TextEditingController();
+  final _idadeController = TextEditingController();
+  final _dataNascimentoController = TextEditingController();
+  final _cidadeController = TextEditingController();
 
-  // Controllers para os campos do formulário
-  late TextEditingController _cpfController;
-  late TextEditingController _nomeController;
-  late TextEditingController _idadeController;
-  late TextEditingController _dataNascimentoController;
-  late TextEditingController _cidadeController;
-
-  @override
-  void initState() {
-    super.initState();
-    // Inicializa os controllers com os valores do DTO (se existir) ou vazios
-    _cpfController = TextEditingController(text: widget.clienteDTO?.cpf ?? '');
-    _nomeController = TextEditingController(text: widget.clienteDTO?.nome ?? '');
-    _idadeController = TextEditingController(
-      text: widget.clienteDTO?.idade ?? '',
-    );
-    _dataNascimentoController = TextEditingController(
-      text: widget.clienteDTO?.dataNascimento ?? '',
-    );
-    _cidadeController = TextEditingController(
-      text: widget.clienteDTO?.cidadeNascimento ?? '',
-    );
-  }
+  Cidade? cidadeSelecionada;
 
   @override
   void dispose() {
-    // Libera os controllers
     _cpfController.dispose();
     _nomeController.dispose();
     _idadeController.dispose();
@@ -52,104 +30,146 @@ class _CadastroClientePageState extends State<CadastroClientePage> {
     super.dispose();
   }
 
-  // Função chamada ao salvar (adicionar ou editar)
-  Future<void> _salvar() async {
-    // Valida o formulário
-    if (!_formKey.currentState!.validate()) return;
+  void _abrirPopupBuscaCidade(BuildContext context) async {
+    final cidadeViewModel = Provider.of<CidadeViewModel>(context, listen: false);
+    final TextEditingController filtroController = TextEditingController();
+    List<Cidade> listaFiltrada = cidadeViewModel.cidades;
 
-    // Obtém o ViewModel (não escuta mudanças aqui)
-    final vm = Provider.of<ClienteViewModel>(context, listen: false);
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setStateDialog) {
+          void filtrarCidades(String filtro) {
+            setStateDialog(() {
+              listaFiltrada = cidadeViewModel.cidades
+                  .where((c) =>
+                      c.nomeCidade.toLowerCase().contains(filtro.toLowerCase()))
+                  .toList();
+            });
+          }
 
-    // Passa dados primitivos para o ViewModel (NÃO cria objetos Model aqui)
-    if (widget.clienteDTO == null) {
-      // Novo cliente
-      await vm.adicionarCliente(
-        cpf: _cpfController.text.trim(),
-        nome: _nomeController.text.trim(),
-        idade: _idadeController.text.trim(),
-        dataNascimento: _dataNascimentoController.text.trim(),
-        cidadeNascimento: _cidadeController.text.trim(),
-      );
-    } else {
-      // Atualiza cliente existente
-      await vm.editarCliente(
-        codigo: widget.clienteDTO!.codigo!,
-        cpf: _cpfController.text.trim(),
-        nome: _nomeController.text.trim(),
-        idade: _idadeController.text.trim(),
-        dataNascimento: _dataNascimentoController.text.trim(),
-        cidadeNascimento: _cidadeController.text.trim(),
-      );
-    }
+          return AlertDialog(
+            title: const Text('Buscar Cidade'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: filtroController,
+                  decoration: const InputDecoration(
+                    labelText: 'Digite o nome da cidade',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: filtrarCidades,
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 200,
+                  width: double.maxFinite,
+                  child: ListView.builder(
+                    itemCount: listaFiltrada.length,
+                    itemBuilder: (context, index) {
+                      final cidade = listaFiltrada[index];
+                      return ListTile(
+                        title: Text(cidade.nomeCidade),
+                        trailing: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context, cidade);
+                          },
+                          child: const Text('Selecionar'),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Fechar'),
+              ),
+            ],
+          );
+        });
+      },
+    ).then((resultado) {
+      if (resultado != null && resultado is Cidade) {
+        setState(() {
+          cidadeSelecionada = resultado;
+          _cidadeController.text = resultado.nomeCidade;
+        });
+      }
+    });
+  }
 
-    // Volta para a tela anterior
-    if (mounted) Navigator.pop(context);
+  void _salvarCliente() {
+    final clienteViewModel =
+        Provider.of<ClienteViewModel>(context, listen: false);
+
+    clienteViewModel.adicionarCliente(
+      cpf: _cpfController.text,
+      nome: _nomeController.text,
+      idade: _idadeController.text,
+      dataNascimento: _dataNascimentoController.text,
+      cidadeNascimento: _cidadeController.text,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cliente salvo com sucesso!')),
+    );
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    final cidadeViewModel = Provider.of<CidadeViewModel>(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.clienteDTO == null ? 'Novo Cliente' : 'Editar Cliente'),
-      ),
+      appBar: AppBar(title: const Text('Novo Cliente')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              // Campo CPF
-              TextFormField(
-                controller: _cpfController,
-                decoration: const InputDecoration(labelText: 'CPF'),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Informe o CPF' : null,
-              ),
-
-              // Campo Nome
-              TextFormField(
-                controller: _nomeController,
-                decoration: const InputDecoration(labelText: 'Nome'),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Informe o nome' : null,
-              ),
-
-              // Campo Idade
-              TextFormField(
-                controller: _idadeController,
-                decoration: const InputDecoration(labelText: 'Idade'),
-                keyboardType: TextInputType.number,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Informe a idade' : null,
-              ),
-
-              // Campo Data de Nascimento
-              TextFormField(
-                controller: _dataNascimentoController,
-                decoration: const InputDecoration(
-                  labelText: 'Data de Nascimento',
+        child: ListView(
+          children: [
+            TextField(
+              controller: _cpfController,
+              decoration: const InputDecoration(labelText: 'CPF'),
+            ),
+            TextField(
+              controller: _nomeController,
+              decoration: const InputDecoration(labelText: 'Nome'),
+            ),
+            TextField(
+              controller: _idadeController,
+              decoration: const InputDecoration(labelText: 'Idade'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: _dataNascimentoController,
+              decoration:
+                  const InputDecoration(labelText: 'Data de Nascimento'),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _cidadeController,
+                    decoration: const InputDecoration(
+                        labelText: 'Cidade de Nascimento'),
+                    enabled: false,
+                  ),
                 ),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Informe a data de nascimento'
-                    : null,
-              ),
-
-              // Campo Cidade de Nascimento
-              TextFormField(
-                controller: _cidadeController,
-                decoration: const InputDecoration(
-                  labelText: 'Cidade de Nascimento',
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () => _abrirPopupBuscaCidade(context),
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Informe a cidade' : null,
-              ),
-
-              const SizedBox(height: 20),
-
-              // Botão de salvar
-              ElevatedButton(onPressed: _salvar, child: const Text('Salvar')),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _salvarCliente,
+              child: const Text('Salvar'),
+            ),
+          ],
         ),
       ),
     );
