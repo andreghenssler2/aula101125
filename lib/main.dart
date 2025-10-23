@@ -2,6 +2,7 @@ import 'package:exdb/view/lista_cliente.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'viewmodel/cliente_viewmodel.dart';
+import 'viewmodel/cidade_viewmodel.dart';
 import 'repository/cliente_repository.dart';
 import 'db/db_helper.dart';
 
@@ -17,9 +18,11 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        // Fornece uma instância de ClienteViewModel para toda a árvore de widgets
         ChangeNotifierProvider(
           create: (_) => ClienteViewModel(ClienteRepository()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CidadeViewModel(),
         ),
       ],
       child: const MyApp(),
