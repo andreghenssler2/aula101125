@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../model/cliente.dart';
 import '../repository/cliente_repository.dart';
 
-// DTO (Data Transfer Object) para expor dados formatados à View
-// A View NÃO deve acessar o Model diretamente
+// DTO (Data Transfer Object)
 class ClienteDTO {
   final int? codigo;
   final String cpf;
@@ -11,7 +10,7 @@ class ClienteDTO {
   final String idade;
   final String dataNascimento;
   final String cidadeNascimento;
-  final String subtitulo; // Dado formatado para exibição
+  final String subtitulo;
 
   ClienteDTO({
     required this.codigo,
@@ -23,7 +22,7 @@ class ClienteDTO {
     required this.subtitulo,
   });
 
-  // Converte Model para DTO
+  // Converte Model → DTO
   factory ClienteDTO.fromModel(Cliente cliente) {
     return ClienteDTO(
       codigo: cliente.codigo,
@@ -36,7 +35,7 @@ class ClienteDTO {
     );
   }
 
-  // Converte DTO para Model
+  // Converte DTO → Model
   Cliente toModel() {
     return Cliente(
       codigo: codigo,
@@ -49,38 +48,28 @@ class ClienteDTO {
   }
 }
 
-// ViewModel que expõe dados e ações para as Views (usa ChangeNotifier para MVVM reativo)
+// ViewModel principal (MVVM)
 class ClienteViewModel extends ChangeNotifier {
-  // Repositório de dados (injeção simples via construtor)
   final ClienteRepository _repository;
-
-  // Lista interna de clientes (Model) - privada
   List<Cliente> _clientes = [];
+  List<Cliente> _clientesFiltrados = []; // 👈 ADICIONE ESTA LINHA
+  String _ultimoFiltro = '';
 
-  // Lista pública de DTOs que a View irá observar
   List<ClienteDTO> get clientes =>
       _clientes.map((c) => ClienteDTO.fromModel(c)).toList();
 
-  // Último filtro usado (para manter a lista consistente ao voltar da tela de edição)
-  String _ultimoFiltro = '';
-
-  // Construtor recebe o repositório
   ClienteViewModel(this._repository) {
-    // Ao construir o ViewModel, carregamos a lista inicial
     loadClientes();
   }
 
-  // Carrega clientes do repositório com filtro opcional
+  // 🔹 Carrega todos os clientes (com filtro opcional)
   Future<void> loadClientes([String filtro = '']) async {
-    // Guarda o filtro atual
     _ultimoFiltro = filtro;
-    // Busca no repositório
     _clientes = await _repository.buscar(filtro: filtro);
-    // Notifica listeners (Views que usam Provider/Consumer serão atualizadas)
     notifyListeners();
   }
 
-  // Adiciona um cliente (recebe dados primitivos da View)
+  // 🔹 Adicionar cliente
   Future<void> adicionarCliente({
     required String cpf,
     required String nome,
@@ -95,12 +84,12 @@ class ClienteViewModel extends ChangeNotifier {
       dataNascimento: dataNascimento,
       cidadeNascimento: cidadeNascimento,
     );
+
     await _repository.inserir(cliente);
-    // Recarrega a lista com o último filtro aplicado
     await loadClientes(_ultimoFiltro);
   }
 
-  // Atualiza um cliente (recebe dados primitivos da View)
+  // 🔹 Editar cliente
   Future<void> editarCliente({
     required int codigo,
     required String cpf,
@@ -117,13 +106,47 @@ class ClienteViewModel extends ChangeNotifier {
       dataNascimento: dataNascimento,
       cidadeNascimento: cidadeNascimento,
     );
+
     await _repository.atualizar(cliente);
     await loadClientes(_ultimoFiltro);
   }
 
-  // Remove um cliente pelo código
+  // 🔹 Remover cliente por código
   Future<void> removerCliente(int codigo) async {
     await _repository.excluir(codigo);
     await loadClientes(_ultimoFiltro);
   }
+
+  // 🔹 Buscar cliente específico pelo código
+  Future<ClienteDTO?> buscarPorCodigo(int codigo) async {
+    final cliente = await _repository.buscarPorCodigo(codigo);
+    if (cliente != null) {
+      return ClienteDTO.fromModel(cliente);
+    }
+    return null;
+  }
+
+  
+
+  // 🔹 Excluir todos os clientes (limpar tabela)
+  Future<void> limparLista() async {
+    await _repository.excluirTodos();
+    _clientes = [];
+    notifyListeners();
+  }
+
+  // 🔹 Filtrar apenas por cidade
+  void filtrar(String filtroCidade) {
+    _ultimoFiltro = filtroCidade;
+    if (filtroCidade.isEmpty) {
+      _clientesFiltrados = List.from(_clientes);
+    } else {
+      final termo = filtroCidade.toLowerCase();
+      _clientesFiltrados = _clientes.where((c) {
+        return c.cidadeNascimento.toLowerCase().contains(termo);
+      }).toList();
+    }
+    notifyListeners();
+  }
+
 }

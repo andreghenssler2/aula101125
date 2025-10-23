@@ -6,6 +6,10 @@ abstract class IClienteRepository {
   Future<int> atualizar(Cliente cliente);
   Future<int> excluir(int codigo);
   Future<List<Cliente>> buscar({String filtro = ''});
+
+  // 🔹 Novos métodos
+  Future<Cliente?> buscarPorCodigo(int codigo);
+  Future<void> excluirTodos();
 }
 
 class ClienteRepository implements IClienteRepository {
@@ -50,5 +54,28 @@ class ClienteRepository implements IClienteRepository {
             orderBy: 'nome',
           );
     return maps.map((m) => Cliente.fromMap(m)).toList();
+  }
+
+  // 🔹 Novo método: buscar cliente por código
+  @override
+  Future<Cliente?> buscarPorCodigo(int codigo) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'clientes',
+      where: 'codigo = ?',
+      whereArgs: [codigo],
+    );
+
+    if (maps.isNotEmpty) {
+      return Cliente.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  // 🔹 Novo método: excluir todos os clientes
+  @override
+  Future<void> excluirTodos() async {
+    final db = await _dbHelper.database;
+    await db.delete('clientes');
   }
 }
