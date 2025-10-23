@@ -52,7 +52,7 @@ class ClienteDTO {
 class ClienteViewModel extends ChangeNotifier {
   final ClienteRepository _repository;
   List<Cliente> _clientes = [];
-  List<Cliente> _clientesFiltrados = []; // 👈 ADICIONE ESTA LINHA
+  // List<Cliente> _clientesFiltrados = []; // 👈 ADICIONE ESTA LINHA
   String _ultimoFiltro = '';
 
   List<ClienteDTO> get clientes =>
@@ -135,18 +135,6 @@ class ClienteViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 🔹 Filtrar apenas por cidade
-  void filtrar(String filtroCidade) {
-    _ultimoFiltro = filtroCidade;
-    if (filtroCidade.isEmpty) {
-      _clientesFiltrados = List.from(_clientes);
-    } else {
-      final termo = filtroCidade.toLowerCase();
-      _clientesFiltrados = _clientes.where((c) {
-        return c.cidadeNascimento.toLowerCase().contains(termo);
-      }).toList();
-    }
-    notifyListeners();
-  }
+
 
 }

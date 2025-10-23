@@ -6,6 +6,7 @@ class CidadeViewModel extends ChangeNotifier {
   final CidadeRepository _repository = CidadeRepository();
 
   List<Cidade> _cidades = [];
+  List<Cidade> _todasCidades = [];
   List<Cidade> get cidades => _cidades;
 
   bool _isLoading = false;
@@ -20,7 +21,8 @@ class CidadeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _cidades = await _repository.getAll();
+      _todasCidades = await _repository.getAll();
+      _cidades = List.from(_todasCidades);
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Erro ao carregar cidades: $e';
@@ -28,6 +30,13 @@ class CidadeViewModel extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  /// 🔍 Filtrar cidades localmente (sem acessar o banco)
+  List<Cidade> filtrar(String filtro) {
+  return _todasCidades
+      .where((c) => c.nomeCidade.toLowerCase().contains(filtro.toLowerCase()))
+      .toList();
   }
 
   /// Adiciona uma nova cidade
@@ -61,25 +70,5 @@ class CidadeViewModel extends ChangeNotifier {
       _errorMessage = 'Erro ao excluir cidade: $e';
       notifyListeners();
     }
-  }
-
-  /// Busca cidades por nome (filtro)
-  Future<void> buscarPorNome(String nome) async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      if (nome.trim().isEmpty) {
-        await carregarCidades();
-      } else {
-        _cidades = await _repository.searchByName(nome);
-      }
-      _errorMessage = null;
-    } catch (e) {
-      _errorMessage = 'Erro ao buscar cidades: $e';
-    }
-
-    _isLoading = false;
-    notifyListeners();
   }
 }
