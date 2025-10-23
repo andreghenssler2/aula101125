@@ -65,14 +65,15 @@ class _CadastroClientePageState extends State<CadastroClientePage> {
           void filtrar(String texto) {
             setStateDialog(() {
               listaFiltrada = cidadeViewModel.cidades
-                  .where((c) => c.nomeCidade
-                      .toLowerCase()
-                      .contains(texto.toLowerCase()))
+                  .where((c) =>
+                      c.nomeCidade.toLowerCase().contains(texto.toLowerCase()))
                   .toList();
             });
           }
 
           return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Text('Buscar Cidade'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -86,29 +87,61 @@ class _CadastroClientePageState extends State<CadastroClientePage> {
                   onChanged: filtrar,
                 ),
                 const SizedBox(height: 10),
-                SizedBox(
-                  height: 250,
-                  width: double.maxFinite,
-                  child: ListView.builder(
-                    itemCount: listaFiltrada.length,
-                    itemBuilder: (context, index) {
-                      final cidade = listaFiltrada[index];
-                      return ListTile(
-                        title: Text(cidade.nomeCidade),
-                        trailing: ElevatedButton(
-                          onPressed: () => Navigator.pop(context, cidade),
-                          child: const Text('Selecionar'),
+
+                // Aqui a mágica:
+                if (listaFiltrada.isEmpty)
+                  Column(
+                    children: [
+                      const Text('Nenhuma cidade encontrada.'),
+                      const SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context); // Fecha o diálogo atual
+                          // Abre a tela de cadastro de cidade
+                          await Navigator.pushNamed(context, '/cadastroCidade');
+                        },
+                        icon: const Icon(Icons.add_location_alt),
+                        label: const Text('Cadastrar nova cidade'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurpleAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      );
-                    },
+                      ),
+                    ],
+                  )
+                else
+                  SizedBox(
+                    height: 250,
+                    width: double.maxFinite,
+                    child: ListView.builder(
+                      itemCount: listaFiltrada.length,
+                      itemBuilder: (context, index) {
+                        final cidade = listaFiltrada[index];
+                        return ListTile(
+                          title: Text(cidade.nomeCidade),
+                          trailing: ElevatedButton(
+                            onPressed: () => Navigator.pop(context, cidade),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurpleAccent,
+                              minimumSize: const Size(90, 36),
+                            ),
+                            child: const Text('Selecionar'),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Fechar'),
+                child: const Text(
+                  'Fechar',
+                  style: TextStyle(color: Colors.deepPurpleAccent),
+                ),
               ),
             ],
           );
@@ -123,6 +156,7 @@ class _CadastroClientePageState extends State<CadastroClientePage> {
       });
     }
   }
+
 
   void _salvar() async {
     if (!_formKey.currentState!.validate()) return;

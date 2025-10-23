@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'viewmodel/cliente_viewmodel.dart';
 import 'viewmodel/cidade_viewmodel.dart';
+
 import 'repository/cliente_repository.dart';
+
+import 'view/cadastro_cidade_page.dart'; // <-- adicione isso
 import 'db/db_helper.dart';
 
 // Ponto de entrada da aplicação
@@ -40,6 +43,9 @@ class MyApp extends StatelessWidget {
       title: 'Cadastro de Clientes (MVVM + SQLite)',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const ListaClientesPage(),
+      routes: {
+        '/cadastroCidade': (context) => const CadastroCidadePage(), // <-- adicione esta linha
+      },
     );
   }
 }
